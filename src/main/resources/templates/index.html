@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <title>测试用</title>
+</head>
+<body>
+
+<h3>
+    <input type="button" value="加载数据-原生Ajax" onclick="show()">
+</h3>
+
+<!--原生AJAX加载数据-->
+<table border="1" style="float: right" hidden="hidden" id="ajaxTable">
+    <tr>
+        <th>id</th>
+        <th>name</th>
+        <th>age</th>
+    </tr>
+    <tbody id="queryUserList">
+    <tr>
+    </tr>
+    </tbody>
+</table>
+
+<!--使用Jquery加载数据-->
+<table border="1">
+    <tr>
+        <th>id</th>
+        <th>name</th>
+        <th>age</th>
+    </tr>
+    <tbody id="userList">
+    <tr th:each="user:${users}">
+        <td th:text="${user.id}"></td>
+        <td th:text="${user.username}"></td>
+        <td th:text="${user.age}"></td>
+        <td>
+            <input type="button" value="删除" th:onclick="'delUser('+${user.id}+')'">
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+
+<script>
+    function delUser(id) {
+        if (confirm("确定要删除吗？")) {
+            $.ajax({
+                url: "/deleteById",
+                type: "get",
+                data: {"id": id},
+                success: function (data) {
+                    if (data > 0) {
+                        // 局部刷新
+                        getUserList();
+                    } else {
+                        alert("删除失败");
+                    }
+                }
+            });
+        }
+    }
+
+    function show() {
+        document.getElementById("ajaxTable").removeAttribute("hidden");
+        // 1、创建AJAX对象
+        let xhr = new XMLHttpRequest();
+        // 2、注册回调函数
+        xhr.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                if (this.status === 200) {
+                    // 将json字符串转换为json对象
+                    let data = JSON.parse(this.responseText);
+                    var userList = "";
+                    for (var i = 0; i < data.length; i++) {
+                        userList += "<tr>" +
+                            "<td>" + data[i].id + "</td>" +
+                            "<td>" + data[i].username + "</td>" +
+                            "<td>" + data[i].age + "</td>" +
+                            "<td>" +
+                            "<input type='button' value='删除' onclick='delUser(" + data[i].id + ")'>" +
+                            "</td>" +
+                            "</tr>";
+                    }
+                    $("#queryUserList").html(userList);
+                } else {
+                    alert(this.status);
+                }
+            }
+        };
+        // 3、打开通道
+        xhr.open("GET", "/getUserList", true);
+        // 设置请求头的内容类型。模拟form表单提交数据。
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        // 4、发送POST请求：send函数中的参数就是发送的数据，这个数据在“请求体”当中发送。
+        xhr.send();
+    }
+
+    function getUserList() {
+        $.ajax({
+            url: "/getUserList",
+            type: "get",
+            success: function (data) {
+                console.log("getUserList====>" + JSON.stringify(data));
+                if (data) {
+                    var userList = "";
+                    for (var i = 0; i < data.length; i++) {
+                        userList += "<tr>" +
+                            "<td>" + data[i].id + "</td>" +
+                            "<td>" + data[i].username + "</td>" +
+                            "<td>" + data[i].age + "</td>" +
+                            "<td>" +
+                            "<input type='button' value='删除' onclick='delUser(" + data[i].id + ")'>" +
+                            "</td>" +
+                            "</tr>";
+                    }
+                    $("#userList").html(userList);
+                    $("#queryUserList").html(userList);
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
